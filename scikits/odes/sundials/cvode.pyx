@@ -750,6 +750,31 @@ cdef class CVODE:
 
         return (True, t0)
 
+    def _reinit_IC(self, double t0, np.ndarray[DTYPE_t, ndim=1] y0):
+        if self.y0 is NULL:
+            _init_step(self, t0, y0)
+            return
+
+        cdef long int N
+        N = <long int> np.alen(y0)
+        if N == self.N:
+            self.y0  = N_VMake_Serial(N, <realtype *>y0.data)
+        else:
+            raise ValueError("Cannot re-init IC with array of unequal lenght.")
+
+        flag = CVodeReInit(self._cv_mem, <realtype> t0, self.y0)
+
+        if flag == CV_ILL_INPUT:
+            raise ValueError('CVodeReInit: Ill input')
+        elif flag == CV_MEM_FAIL:
+            raise MemoryError('CVReInit: Memory allocation error')
+        elif flag == CV_MEM_NULL:
+            raise MemoryError('CVodeReCreate: Memory allocation error')
+        elif flag == CV_NO_MALLOC:
+            raise MemoryError('CVodeReInit: No memory allocated in CVInit.')
+
+        return (True, t0)
+
     def solve(self, object tspan, object y0):
 
         cdef np.ndarray[DTYPE_t, ndim=1] np_tspan, np_y0
