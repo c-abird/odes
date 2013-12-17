@@ -752,7 +752,7 @@ cdef class CVODE:
 
     def _reinit_IC(self, double t0, np.ndarray[DTYPE_t, ndim=1] y0):
         if self.y0 is NULL:
-            _init_step(self, t0, y0)
+            self._init_step(self, t0, y0)
             return
 
         cdef long int N
